@@ -25,18 +25,16 @@ export default function Navlinks({ user }: NavlinksProps) {
           <Link href="/" className={s.link}>
             Pricing
           </Link>
-          <>
           {user && (
-            <Link href="/account" className={s.link}>
-              Account
-            </Link>
-          )};
-          {user && (
-            <Link href="/mednotes" className={s.link}>
-              MedNotes
-            </Link>
-          )};
-          </>
+            <>
+              <Link href="/account" className={s.link}>
+                Account
+              </Link>
+              <Link href="/mednotes" className={s.link}>
+                MedNotes
+              </Link>
+            </>
+          )}
         </nav>
       </div>
       <div className="flex justify-end space-x-8">
