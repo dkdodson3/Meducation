@@ -67,7 +67,7 @@ const Page = ({ user }) => {
 
   const submitEventRef = useRef<null | React.FormEvent<HTMLFormElement>>(null);
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (e: any) => {
     e.preventDefault();
     const messageObject = {
       disease: input,
