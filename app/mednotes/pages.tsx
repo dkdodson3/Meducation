@@ -40,7 +40,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
-const Page = ({ user }) => {
+const Page = () => {
   const [disease, setDisease] = useState('');
   const diseaseRef = useRef(disease); // Create a ref for the disease state
   const notesRef = useRef<null | HTMLDivElement>(null);
