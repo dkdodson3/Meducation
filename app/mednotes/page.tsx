@@ -77,10 +77,16 @@ const lastMessage = messages[messages.length - 1];
 const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
 
 const transformNote = (note : string) => {
-  return note.split("<sep />");
+  if (note) {
+    // Todo: Fix it
+    // munging the data to fit the boxes... VERY BAD FORM...
+    const notes = note.split("<sep />").filter(line => line.trim() !== "");
+    notes[0] = "\n\n" + notes[0]
+    return notes;
+  }
 };
 
-const transformedNote = generatedNote && transformNote(generatedNote); 
+const transformedNote = generatedNote ? transformNote(generatedNote) : null; 
 
 // const {
 //   data: { user }
@@ -96,32 +102,25 @@ return (
     <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
 
       <DisclaimerCard />
-      <form style={{ width: '100%', marginTop: '20px' }} onSubmit={onSubmit}>
-        <div style={{ width: '100%', marginTop: '20px', textAlign: 'center' }}>
+      <form style={{ width: '100%'}} onSubmit={onSubmit}>
+        <div style={{ width: '100%', textAlign: 'center' }}>
           <select
               value={selectedPhysicianType}
               onChange={(e) => setSelectedPhysicianType(e.target.value)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-white focus:ring-white my-5"
+              style={{color: 'black', paddingLeft: '10px'}}
             >
             {Object.entries(physician_type_options).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
         </div>
-
         <div className="flex mt-10 items-center space-x-3">
-          <Image
-            src="/1-black.png"
-            width={30}
-            height={30}
-            alt="1 icon"
-            className="mb-5 sm:mb-0"
-          />
           <p className="text-left font-medium">
-            Enter a disease <span className="text-slate-500"></span>.
+            Enter a disease
           </p>
         </div>
-        <textarea
+        <textarea style={{color: 'black', paddingLeft: '10px'}}
           value={input}
           onChange={handleInputChange}
           rows={1}
@@ -131,10 +130,10 @@ return (
 
         {!isLoading && (
           <Button
-          className='bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full'
-          type="submit"
-          onClick={onSubmit}
-        >
+            className='bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full'
+            type="submit"
+            onClick={onSubmit}
+          >
           Here we go! &rarr;
         </Button>
         )}
@@ -147,29 +146,32 @@ return (
           </Button>
           )}
       </form>
+      
       <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
       <output className="space-y-10 my-10">
       {transformedNote && (
         <>
           <div>
             <h2
-              className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto"
+              className="sm:text-4xl text-3xl font-bold text-black mx-auto"
               ref={notesRef}
             />
           </div>
-          <div className="space-y-8 flex flex-col items-center justify-center max-w-xl mx-auto">
+          <div className="space-y-8 flex flex-col justify-center" style={{ maxWidth: '100%'}}>
               {transformedNote.map((section, idx) => (
-
-                  <div key={idx} className="relative p-2 border border-gray-300 shadow-lg mt-5">
-                      <pre className="bg-white rounded-xl shadow-md p-4 hover:bg-gray-100 transition cursor-copy border preformatted-text" style={{ maxWidth: '100%', margin: 'auto', textAlign: 'left' }}>
-                          {section}
+                  <div key={idx} className="relative p-2 border border-gray-300 shadow-lg mt-5 "  style={{ maxWidth: '100%'}}>
+                      <pre style={{ maxWidth: '100%', margin: 'auto', textAlign: 'left', textWrap: 'wrap'}}>
+                        <Button 
+                        onClick={() => copyToClipboard(section)} 
+                        className="absolute top-2 right-2 bg-blue-500 text-black rounded p-2 hover:bg-blue-700 cursor-pointer">
+                            Copy
+                        </Button>
+                          <>
+                            {section}
+                          </>
                       </pre>
                       
-                      <Button 
-                      onClick={() => copyToClipboard(section)} 
-                      className="absolute top-2 right-2 bg-blue-500 text-white rounded p-2 hover:bg-blue-700 cursor-pointer">
-                          Copy
-                      </Button>
+                      
                   </div>
                 ))}
             </div>

@@ -31,6 +31,14 @@ body {
   @apply text-white bg-zinc-800 antialiased;
 }
 
+textarea {
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Helvetica Neue',
+    'Helvetica', sans-serif;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  @apply text-black bg-white;
+}
+
 body {
   position: relative;
   min-height: 100%;
