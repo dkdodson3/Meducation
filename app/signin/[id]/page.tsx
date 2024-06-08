@@ -1,5 +1,3 @@
-'use client';
-
 import Logo from '@/components/icons/Logo';
 import { createClient } from '@/utils/supabase/client';
 import { cookies } from 'next/headers';

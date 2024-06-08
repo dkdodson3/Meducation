@@ -1,11 +1,12 @@
 'use client';
 
-import Image from 'next/image';
-import { GetServerSideProps } from 'next';
-import React, { useState, useRef, useEffect } from 'react';
-import Header from '@/components/ui/MedNotes/Header';
-import Disclaimer from '@/components/ui/MedNotes/Disclaimer';
 import Button from '@/components/ui/Button';
+import Image from 'next/image';
+import { useState, useRef, useEffect } from 'react';
+import Header from '@/components/ui/MedNotes/Header';
+import DisclaimerCard from '@/components/ui/MedNotes/DisclaimerCard';
+
+
 import { useChat } from 'ai/react';
 import { createClient } from '@/utils/supabase/client';
 import { redirect } from 'next/navigation';
@@ -19,38 +20,16 @@ const physician_type_options = {
   // ... other roles
 };
 
-// Nextjs calls this automatically when the page is requested.
-export const getServerSideProps: GetServerSideProps = async (context) => {
+
+export default  function MedNotes() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return {
-      redirect: {
-        destination: '/signin',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {
-      user,
-    },
-  };
-};
-
-const Page = () => {
   const [disease, setDisease] = useState('');
   const diseaseRef = useRef(disease); // Create a ref for the disease state
   const notesRef = useRef<null | HTMLDivElement>(null);
   const [isReadyForSubmit, setIsReadyForSubmit] = useState(false);
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [selectedPhysicianType, setSelectedPhysicianType] = useState('')
 
-  const toggleAccordion = () => {
-    setIsAccordionOpen(!isAccordionOpen);
-  };
+  const [selectedPhysicianType, setSelectedPhysicianType] = useState('')
 
   const scrollToNotes = () => {
     if (notesRef.current !== null) {
@@ -103,33 +82,26 @@ const transformNote = (note : string) => {
 
 const transformedNote = generatedNote && transformNote(generatedNote); 
 
+// const {
+//   data: { user }
+// } = await supabase.auth.getUser();
+
+// if (!user) {
+//   return redirect('/signin');
+// }
+
 return (
   <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
     <Header />
     <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-      {/* Accordion for Legal Disclaimer */}
-      <div style={{ width: '100%', marginTop: '20px' }}>
-        <Button style={{
-              width: '100%',
-              textAlign: 'left',
-              backgroundColor: '#f3f3f3',
-              padding: '10px',
-              fontSize: '18px',
-              border: 'none',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-            onClick={toggleAccordion}>
-          Legal Disclaimer (Click To Expand)
-        </Button>
-        {isAccordionOpen && <Disclaimer />}
-      </div>
-      <form className="max-w-xl w-full" onSubmit={onSubmit}>
-        <div className="flex mt-10 items-center space-x-3">
+
+      <DisclaimerCard />
+      <form style={{ width: '100%', marginTop: '20px' }} onSubmit={onSubmit}>
+        <div style={{ width: '100%', marginTop: '20px', textAlign: 'center' }}>
           <select
               value={selectedPhysicianType}
               onChange={(e) => setSelectedPhysicianType(e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-white focus:ring-white my-5"
             >
             {Object.entries(physician_type_options).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -208,5 +180,3 @@ return (
   </div>
   );
 }
-
-export default Page;

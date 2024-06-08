@@ -31,7 +31,7 @@ export default function Navlinks({ user }: NavlinksProps) {
                 Account
               </Link>
               <Link href="/mednotes" className={s.link}>
-                MedNotes
+                Mednotes
               </Link>
             </>
           )}

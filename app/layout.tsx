@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { Analytics } from '@vercel/analytics/react';
 import Footer from '@/components/ui/Footer';
 import Navbar from '@/components/ui/Navbar';
 import { Toaster } from '@/components/ui/Toasts/toaster';
