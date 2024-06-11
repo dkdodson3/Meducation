@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { useState } from 'react';
 
-export default function DisclaimerCard({ userName }: { userName: string }) {
+export default function DisclaimerCard() {
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const toggleAccordion = () => {

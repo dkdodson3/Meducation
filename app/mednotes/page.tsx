@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import Header from '@/components/ui/MedNotes/Header';
 import DisclaimerCard from '@/components/ui/MedNotes/DisclaimerCard';
+import Card from '@/components/ui/Card';
+import TextareaAutosize from 'react-textarea-autosize'
 
 
 import { useChat } from 'ai/react';
@@ -76,14 +78,23 @@ useEffect(() => {
 const lastMessage = messages[messages.length - 1];
 const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
 
+
 const transformNote = (note : string) => {
   if (note) {
-    // Todo: Fix it
-    // munging the data to fit the boxes... VERY BAD FORM...
-    const notes = note.split("<sep />").filter(line => line.trim() !== "");
-    notes[0] = "\n\n" + notes[0]
-    return notes;
-  }
+    const separatedNotes = note.split("<sep />")
+    let newNotes: string[][] = [];
+    separatedNotes.forEach((item: string) => {
+      let splitItem = item.split("**")
+      if (splitItem.length > 1) {
+        let firstItem = splitItem[1];
+        let otherItems = splitItem.slice(2).join("\n").replace("**", "");
+        newNotes.push([firstItem, otherItems]);
+      }
+    });
+
+    return newNotes;
+  };
+
 };
 
 const transformedNote = generatedNote ? transformNote(generatedNote) : null; 
@@ -120,14 +131,12 @@ return (
             Enter a disease
           </p>
         </div>
-        <textarea style={{color: 'black', paddingLeft: '10px'}}
+        <TextareaAutosize style={{color: 'black', paddingLeft: '10px'}}
           value={input}
           onChange={handleInputChange}
           rows={1}
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-          placeholder={"Enter a disease name..."}
-        />
-
+          placeholder={"Enter a disease name..."}/>
         {!isLoading && (
           <Button
             className='bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full'
@@ -159,20 +168,18 @@ return (
           </div>
           <div className="space-y-8 flex flex-col justify-center" style={{ maxWidth: '100%'}}>
               {transformedNote.map((section, idx) => (
-                  <div key={idx} className="relative p-2 border border-gray-300 shadow-lg mt-5 "  style={{ maxWidth: '100%'}}>
-                      <pre style={{ maxWidth: '100%', margin: 'auto', textAlign: 'left', textWrap: 'wrap'}}>
-                        <Button 
-                        onClick={() => copyToClipboard(section)} 
-                        className="absolute top-2 right-2 bg-blue-500 text-black rounded p-2 hover:bg-blue-700 cursor-pointer">
-                            Copy
-                        </Button>
-                          <>
-                            {section}
-                          </>
-                      </pre>
-                      
-                      
-                  </div>
+                <Card 
+                  title={section[0]}
+                  footer={
+                    <Button 
+                          onClick={() => copyToClipboard(section[1])} 
+                          className="absolute top-2 right-2 bg-blue-500 text-black rounded p-2 hover:bg-blue-700 cursor-pointer">
+                              Copy
+                          </Button>
+                  }
+                  >
+                    {section[1]}
+                  </Card>
                 ))}
             </div>
           </>
