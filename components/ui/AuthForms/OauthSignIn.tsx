@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button';
 import { signInWithOAuth } from '@/utils/auth-helpers/client';
 import { type Provider } from '@supabase/supabase-js';
 import { Github } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 type OAuthProviders = {
   name: Provider;
@@ -23,11 +23,17 @@ export default function OauthSignIn() {
   ];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await signInWithOAuth(e);
-    setIsSubmitting(false);
-  };
+    try {
+      await signInWithOAuth(e);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
 
   return (
     <div className="mt-8">

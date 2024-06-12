@@ -12,14 +12,18 @@ export default function DisclaimerCard() {
   };
 
   return (
-    <Card title="Legal Disclaimer">
+    <Card 
+      title="Legal Disclaimer"
+      footer={
+        <Button 
+          onClick={toggleAccordion}
+          style={{width: "25%"}}>
+          View
+        </Button>
+      }
+    >
       <div className="mt-8 mb-4 text-xl font-semibold">
-        <div style={{ width: '100%', marginTop: '20px' }}>
-          <Button 
-            style={{ width: '100%' }}
-            onClick={toggleAccordion}>
-            View
-          </Button>
+        <div style={{ width: '100%'}}>
           {isAccordionOpen && 
             (
               <div style={{ backgroundColor: '#000', padding: '15px', border: '1px solid #ddd', textAlign: 'left'}}>

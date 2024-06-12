@@ -20,18 +20,11 @@ const physician_type_options = {
 export default  function DataForm() {
   const supabase = createClient();
   const [disease, setDisease] = useState('');
-  const diseaseRef = useRef(disease);
-  const notesRef = useRef<null | HTMLDivElement>(null);
-  const [isReadyForSubmit, setIsReadyForSubmit] = useState(false);
-
   const [selectedPhysicianType, setSelectedPhysicianType] = useState('')
-
-  const scrollToNotes = () => {
-    if (notesRef.current !== null) {
-      notesRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
+  const [isReadyForSubmit, setIsReadyForSubmit] = useState(false);
+  const notesRef = useRef<null | HTMLDivElement>(null);
+  const submitEventRef = useRef<null | React.FormEvent<HTMLFormElement>>(null);
+  
   const { input, handleInputChange, handleSubmit, isLoading, messages } = useChat({
     body: { disease },
     onResponse() {
@@ -39,7 +32,11 @@ export default  function DataForm() {
     },
   });
 
-  const submitEventRef = useRef<null | React.FormEvent<HTMLFormElement>>(null);
+  const scrollToNotes = () => {
+    if (notesRef.current !== null) {
+      notesRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const onSubmit = (e: any) => {
     e.preventDefault();
@@ -47,96 +44,86 @@ export default  function DataForm() {
       disease: input,
       physician_type: selectedPhysicianType,
     };
-    const messageString = JSON.stringify(messageObject);
+    setDisease(JSON.stringify(messageObject));
     submitEventRef.current = e;
-    setDisease(messageString);
     setIsReadyForSubmit(true);
   };
 
-
-const copyToClipboard = async (text : string) => {
-  if ('clipboard' in navigator) {
-    return await navigator.clipboard.writeText(text)
-  } else {
-    return document.execCommand('copy', true, text)
-  }
-}
-
-useEffect(() => {
-  if (isReadyForSubmit && disease && submitEventRef.current) {
-    handleSubmit(submitEventRef.current);
-    setIsReadyForSubmit(false);
-  }
-}, [disease, isReadyForSubmit, handleSubmit]); 
-
-const lastMessage = messages[messages.length - 1];
-const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
-
-
-const transformNote = (note : string) => {
-  if (note) {
-    const separatedNotes = note.split("<sep />")
-    let newNotes: string[][] = [];
-    separatedNotes.forEach((item: string) => {
-      let splitItem = item.split("**")
-      if (splitItem.length > 1) {
-        let firstItem = splitItem[1];
-        let otherItems = splitItem.slice(2);
-        if (!otherItems.includes("**")) {
-          newNotes.push([firstItem, ...otherItems]); // Spread the otherItems array without joining
-        }
-      }
-    });
-
-    return newNotes;
+  const copyToClipboard = async (text : string) => {
+    if ('clipboard' in navigator) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      document.execCommand('copy', true, text)
+    }
   };
 
-};
-const transformedNote = generatedNote ? transformNote(generatedNote) : null; 
+  useEffect(() => {
+    if (isReadyForSubmit && disease && submitEventRef.current) {
+      handleSubmit(submitEventRef.current);
+      setIsReadyForSubmit(false);
+    }
+  }, [disease, isReadyForSubmit, handleSubmit]); 
+
+  const lastMessage = messages[messages.length - 1];
+  const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
 
 
-return (
+  const transformNote = (note : string) => {
+    if (!note) return [];
+    return note.split("<sep />").map((item) => {
+      const splitItem = item.split("**");
+      if (splitItem.length > 1) {
+        return [splitItem[1], ...splitItem.slice(2)];
+      }
+      return [];
+      }).filter(item => item.length > 0 && !item.includes('**'));
+    };
+
+  const transformedNote = generatedNote ? transformNote(generatedNote) : null; 
+
+  return (
     <>
-        <Card title="Request Information">
-            <form style={{ width: '100%'}} onSubmit={onSubmit}>
+        <Card 
+          title="Request Information"
+          description={<div style={{ textAlign: 'left'}}>
+            <b>Enter a Disease</b>
+            </div>
+          }
+          footer={
+            <Button
+              type="submit"
+              onClick={onSubmit}
+              style={{width: "25%"}}
+            >
+              GET DATA &rarr;
+              </Button>
+            }
+          >
+            <form style={{ width: '100%', textAlign: 'left'}} onSubmit={onSubmit}>
+              <div>
                 <TextareaAutosize style={{color: 'black', paddingLeft: '10px', width: '100%'}}
                 value={input}
                 onChange={handleInputChange}
                 rows={1}
                 placeholder={"Enter a disease name..."}/>
+              </div>
+              <div>
                 <select
                     value={selectedPhysicianType}
                     onChange={(e) => setSelectedPhysicianType(e.target.value)}
                     className="w-full border-gray-300 shadow-sm focus:border-white focus:ring-white my-5"
                     style={{color: 'black', paddingLeft: '10px'}}
-                    >
+                  >
                     {Object.entries(physician_type_options).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                     ))}
                 </select>
-                    {!isLoading && (
-                        <Button
-                            style={{ width: '100%'}}
-                            type="submit"
-                            onClick={onSubmit}
-                        >
-                        Here we go! &rarr;
-                        </Button>
-                    )}
-
-                    {isLoading && (
-                        <Button
-                            disabled={true}
-                            style={{ width: '100%'}}
-                        >
-                        Open customer portal
-                        </Button>
-                    )}
+              </div>
             </form>
         </Card>
             {transformedNote && (
                 <>
-                    <div style={{ maxWidth: '100%'}}>
+                    <div>
                         {transformedNote.map((section, idx) => (
                             <Card 
                                 key={idx}
@@ -145,20 +132,18 @@ return (
                                         {section[0]}
                                     </div>
                                     } 
-                                description={
-                                    // <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <pre style={{ textAlign: 'left', flex: 1, whiteSpace: 'pre-wrap' }}>
-                                            {section[1]}
-                                        </pre>
-                                    // </div>
-                                }
                                 footer={
                                     // <div style={{ textAlign: 'right' }}> 
-                                    <Button onClick={() => copyToClipboard(section[1])}>
+                                    <Button onClick={() => copyToClipboard(section[1])} style={{width: "25%"}}>
                                         Copy
                                     </Button>
                                     // </div>
                                 } >
+                                  {
+                                    <pre style={{ textAlign: 'left', flex: 1, whiteSpace: 'pre-wrap' }}>
+                                        {section[1]}
+                                    </pre>
+                                  }
                             </Card>
                         ))}
                     </div>
