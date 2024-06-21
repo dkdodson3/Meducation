@@ -5,7 +5,7 @@ import DisclaimerCard from '@/components/ui/MedNotes/DisclaimerCard';
 import DataForm from '@/components/ui/MedNotes/DataForm';
 
 
-export default  function MedNotes() {
+export default function MedNotes() {
 // const {
 //   data: { user }
 // } = await supabase.auth.getUser();

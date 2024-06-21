@@ -17,19 +17,33 @@ const physician_type_options = {
     // ... other roles
   };
 
+interface Message {
+  role: string;
+  content: string;
+}
+
 export default  function DataForm() {
   const supabase = createClient();
+  const [finalStreamData, setFinalStreamData] = useState('');
   const [disease, setDisease] = useState('');
+  const [accumulatedContent, setAccumulatedContent] = useState('');
   const [selectedPhysicianType, setSelectedPhysicianType] = useState('')
   const [isReadyForSubmit, setIsReadyForSubmit] = useState(false);
   const notesRef = useRef<null | HTMLDivElement>(null);
+  const [transformedNote, setTransformedNote] = useState<string[][]>([]);
+  const [shouldRenderCard, setShouldRenderCard] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const submitEventRef = useRef<null | React.FormEvent<HTMLFormElement>>(null);
   
   const { input, handleInputChange, handleSubmit, isLoading, messages } = useChat({
     body: { disease },
     onResponse() {
       scrollToNotes();
+      setFinalStreamData(messages.map(message => message.content).join('\n'));
     },
+    onFinish(finishedMessage) {
+      setFinalStreamData(finishedMessage.content.split("<sep />").join("\n"));
+    }
   });
 
   const scrollToNotes = () => {
@@ -47,6 +61,7 @@ export default  function DataForm() {
     setDisease(JSON.stringify(messageObject));
     submitEventRef.current = e;
     setIsReadyForSubmit(true);
+    setShouldRenderCard(false);
   };
 
   const copyToClipboard = async (text : string) => {
@@ -62,24 +77,58 @@ export default  function DataForm() {
       handleSubmit(submitEventRef.current);
       setIsReadyForSubmit(false);
     }
-  }, [disease, isReadyForSubmit, handleSubmit]); 
+  }, [disease, isReadyForSubmit, handleSubmit]);
 
   const lastMessage = messages[messages.length - 1];
   const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
 
-
-  const transformNote = (note : string) => {
-    if (!note) return [];
-    return note.split("<sep />").map((item) => {
-      const splitItem = item.split("**");
-      if (splitItem.length > 1) {
-        return [splitItem[1], ...splitItem.slice(2)];
-      }
-      return [];
-      }).filter(item => item.length > 0 && !item.includes('**'));
+  useEffect(() => {
+    const transformNote = (note: string): string[][] => {
+      if (!note) return [];
+      return note.split("<sep />").map((item) => {
+        const splitIndex = item.indexOf(":");
+        if (splitIndex !== -1) {
+          const title = item.slice(0, splitIndex).trim();
+          const content = item.slice(splitIndex + 1).trim();
+          return [title, content];
+        }
+        return [];
+      }).filter(item => item.length > 0);
     };
 
-  const transformedNote = generatedNote ? transformNote(generatedNote) : null; 
+    const transformed = transformNote(accumulatedContent);
+
+    if (generatedNote) {
+      const transformed = transformNote(generatedNote);
+      setTransformedNote(transformed);
+      setShouldRenderCard(true);
+    }
+  }, [generatedNote]);
+
+  useEffect(() => {
+    if (isSubmitted) {
+      // Reset isSubmitted to false after processing
+      setIsSubmitted(false);
+    }
+  }, [isSubmitted]);
+
+  const renderTransformedNotes = () => {
+    return transformedNote.map((section, idx) => (
+      <Card 
+        key={idx}
+        title={<div style={{ textAlign: 'left', flex: 1 }}>{section[0]}</div>} 
+        footer={
+          <Button onClick={() => copyToClipboard(section[1])} style={{width: "25%", textAlign: 'center'}}>
+            Copy
+          </Button>
+        }
+      >
+        <pre style={{ textAlign: 'left', flex: 1, whiteSpace: 'pre-wrap' }}>
+          {section[1]}
+        </pre>
+      </Card>
+    ));
+  };
 
   return (
     <>
@@ -121,34 +170,21 @@ export default  function DataForm() {
               </div>
             </form>
         </Card>
-            {transformedNote && (
-                <>
-                    <div>
-                        {transformedNote.map((section, idx) => (
-                            <Card 
-                                key={idx}
-                                title={
-                                    <div style={{ textAlign: 'left', flex: 1 }}>
-                                        {section[0]}
-                                    </div>
-                                    } 
-                                footer={
-                                    // <div style={{ textAlign: 'right' }}> 
-                                    <Button onClick={() => copyToClipboard(section[1])} style={{width: "25%"}}>
-                                        Copy
-                                    </Button>
-                                    // </div>
-                                } >
-                                  {
-                                    <pre style={{ textAlign: 'left', flex: 1, whiteSpace: 'pre-wrap' }}>
-                                        {section[1]}
-                                    </pre>
-                                  }
-                            </Card>
-                        ))}
-                    </div>
-                </>
-            )}
+        {shouldRenderCard && transformedNote.length > 0 && (
+          <div style={{ width: '100%', textAlign: 'center'}}>
+            {renderTransformedNotes()}
+
+            {/* <Card
+            title="Retrieved Data"
+            footer={
+              <Button onClick={() => copyToClipboard(finalStreamData)}>
+                  Copy All
+              </Button>
+            }>
+              {renderTransformedNotes()}
+            </Card> */}
+          </div>
+        )}
     </>
   );
 }
