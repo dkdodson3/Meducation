@@ -72,7 +72,7 @@ export default async function ChatCompletionRequest(
         diseaseInput,
         physicianType,
         modelType = 'gpt-4o',
-        // odelType = 'gpt-3.5-turbo',
+        // modelType = 'gpt-3.5-turbo',
         streamBool
     }: ChatCompletionProps 
 ) {

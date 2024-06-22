@@ -5,10 +5,12 @@ import { useState, useRef, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import TextareaAutosize from 'react-textarea-autosize'
 import { useChat } from 'ai/react';
-import { createClient } from '@/utils/supabase/client';
 
+interface PhysicianTypeOptions {
+  [key: string]: string;
+}
 
-const physician_type_options = {
+const physician_type_options: PhysicianTypeOptions = {
     "": "Select your specialty...",
     "emergency_room_physician": "Emergency Room Physician",
     "inpatient_physician": "Inpatient Physician",
@@ -17,20 +19,13 @@ const physician_type_options = {
     // ... other roles
   };
 
-interface Message {
-  role: string;
-  content: string;
-}
-
 export default  function DataForm() {
-  const supabase = createClient();
-  const [finalStreamData, setFinalStreamData] = useState('');
   const [disease, setDisease] = useState('');
-  const [accumulatedContent, setAccumulatedContent] = useState('');
+  const [physicianTypeLabel, setPhysicianTypeLabel] = useState('');
   const [selectedPhysicianType, setSelectedPhysicianType] = useState('')
   const [isReadyForSubmit, setIsReadyForSubmit] = useState(false);
   const notesRef = useRef<null | HTMLDivElement>(null);
-  const [transformedNote, setTransformedNote] = useState<string[][]>([]);
+  const [transformedNote, setTransformedNote] = useState<string>('');
   const [shouldRenderCard, setShouldRenderCard] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const submitEventRef = useRef<null | React.FormEvent<HTMLFormElement>>(null);
@@ -39,11 +34,7 @@ export default  function DataForm() {
     body: { disease },
     onResponse() {
       scrollToNotes();
-      setFinalStreamData(messages.map(message => message.content).join('\n'));
     },
-    onFinish(finishedMessage) {
-      setFinalStreamData(finishedMessage.content.split("<sep />").join("\n"));
-    }
   });
 
   const scrollToNotes = () => {
@@ -80,54 +71,44 @@ export default  function DataForm() {
   }, [disease, isReadyForSubmit, handleSubmit]);
 
   const lastMessage = messages[messages.length - 1];
-  const generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
+  let generatedNote = lastMessage?.role === "assistant" ? lastMessage.content : null;
 
   useEffect(() => {
-    const transformNote = (note: string): string[][] => {
-      if (!note) return [];
-      return note.split("<sep />").map((item) => {
-        const splitIndex = item.indexOf(":");
-        if (splitIndex !== -1) {
-          const title = item.slice(0, splitIndex).trim();
-          const content = item.slice(splitIndex + 1).trim();
-          return [title, content];
-        }
-        return [];
-      }).filter(item => item.length > 0);
+    const transformNote = (note: string): string => {
+      if (!note) return '';
+      return note.trim();
     };
-
-    const transformed = transformNote(accumulatedContent);
 
     if (generatedNote) {
       const transformed = transformNote(generatedNote);
       setTransformedNote(transformed);
       setShouldRenderCard(true);
+      generatedNote = null;
     }
   }, [generatedNote]);
 
   useEffect(() => {
     if (isSubmitted) {
-      // Reset isSubmitted to false after processing
       setIsSubmitted(false);
     }
   }, [isSubmitted]);
 
   const renderTransformedNotes = () => {
-    return transformedNote.map((section, idx) => (
+    const label = physicianTypeLabel.slice()
+    return (
       <Card 
-        key={idx}
-        title={<div style={{ textAlign: 'left', flex: 1 }}>{section[0]}</div>} 
+        title={<div style={{ textAlign: 'center', flex: 1 }}>{label}</div>} 
         footer={
-          <Button onClick={() => copyToClipboard(section[1])} style={{width: "25%", textAlign: 'center'}}>
+          <Button onClick={() => copyToClipboard(transformedNote)} style={{width: "25%", textAlign: 'center'}}>
             Copy
           </Button>
         }
       >
         <pre style={{ textAlign: 'left', flex: 1, whiteSpace: 'pre-wrap' }}>
-          {section[1]}
+          {transformedNote}
         </pre>
       </Card>
-    ));
+    )
   };
 
   return (
@@ -159,7 +140,16 @@ export default  function DataForm() {
               <div>
                 <select
                     value={selectedPhysicianType}
-                    onChange={(e) => setSelectedPhysicianType(e.target.value)}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value;
+                      setSelectedPhysicianType(selectedValue);
+                      setShouldRenderCard(false);
+                      if (selectedValue) {
+                        setPhysicianTypeLabel(physician_type_options[selectedValue]);
+                      } else {
+                        setPhysicianTypeLabel("");
+                      }
+                    }}
                     className="w-full border-gray-300 shadow-sm focus:border-white focus:ring-white my-5"
                     style={{color: 'black', paddingLeft: '10px'}}
                   >
@@ -173,16 +163,6 @@ export default  function DataForm() {
         {shouldRenderCard && transformedNote.length > 0 && (
           <div style={{ width: '100%', textAlign: 'center'}}>
             {renderTransformedNotes()}
-
-            {/* <Card
-            title="Retrieved Data"
-            footer={
-              <Button onClick={() => copyToClipboard(finalStreamData)}>
-                  Copy All
-              </Button>
-            }>
-              {renderTransformedNotes()}
-            </Card> */}
           </div>
         )}
     </>
