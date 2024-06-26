@@ -4,7 +4,7 @@
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 import ChatCompletionRequest, { ChatCompletionProps } from '@/app/mednotes/server'
 
-export const runtime = 'edge';
+// const runtime = 'edge'; // WHY?
 
 export async function POST(req) {
   try {
