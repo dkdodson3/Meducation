@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-subscription-payments",
+  "name": "meducation_dkd",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -38,14 +38,11 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-merge-refs": "^2.1.1",
-    "openai-edge": "^1.2.0",
-    "react-textarea-autosize": "8.5.3",
     "stripe": "^14.25.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "react-textarea-autosize": "8.5.3",
-    "tailwindcss-animate": "^1.0.7"
+    "react-textarea-autosize": "8.5.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
@@ -64,7 +61,6 @@
     "typescript": "^5.3.3",
     "jest": "29.7.0",
     "@testing-library/react":"16.0.0",
-    "msw":"2.3.1",
-    "typescript": "^5.3.3"
+    "msw":"2.3.1"
   }
 }
